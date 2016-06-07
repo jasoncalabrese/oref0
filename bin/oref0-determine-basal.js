@@ -86,8 +86,6 @@ if (!module.parent) {
             };
             console.error(msg.msg);
             // console.log(JSON.stringify(msg));
-            errors.push(msg);
-            // process.exit(1);
         }
     }
     //if (meal_input) { meal_data = require(cwd + '/' + meal_input); }
@@ -109,8 +107,6 @@ if (!module.parent) {
             console.error(msg.msg);
             console.error(e);
             // console.log(JSON.stringify(msg));
-            errors.push(msg);
-            // process.exit(1);
         }
       }
     }
