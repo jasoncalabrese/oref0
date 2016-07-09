@@ -27,6 +27,21 @@ if (!module.parent) {
         default: true
 
       })
+      .option('meal', {
+        describe: "json doc describing meals",
+        default: true
+
+      })
+      .option('missing-auto-sens-ok', {
+        describe: "If auto-sens data is missing, try anyway.",
+        default: true
+
+      })
+      .option('missing-meal-ok', {
+        describe: "If meal data is missing, try anyway.",
+        default: true
+
+      })
       // error and show help if some other args given
       .strict(true)
       .help('help')
@@ -37,6 +52,7 @@ if (!module.parent) {
 
     var params = argv.argv;
     var errors = [ ];
+    var warnings = [ ];
 
     var iob_input = params._.slice(0, 1).pop();
     if ([null, '--help', '-h', 'help'].indexOf(iob_input) > 0) {
@@ -52,6 +68,9 @@ if (!module.parent) {
     if (params._.length > 5) {
       autosens_input = params.autoSens ? params._.slice(4, 5).pop() : false;
       meal_input = params._.slice(5, 6).pop();
+    }
+    if (params.meal && params.meal !== true && !meal_input) {
+      meal_input = params.meal;
     }
 
     if (!iob_input || !currenttemp_input || !glucose_input || !profile_input) {
@@ -74,7 +93,7 @@ if (!module.parent) {
     //console.log(carbratio_data);
     var meal_data = { };
     //console.error("meal_input",meal_input);
-    if (typeof meal_input != 'undefined') {
+    if (meal_input && typeof meal_input != 'undefined') {
         try {
             meal_data = JSON.parse(fs.readFileSync(meal_input, 'utf8'));
             console.error(JSON.stringify(meal_data));
@@ -86,6 +105,10 @@ if (!module.parent) {
             };
             console.error(msg.msg);
             // console.log(JSON.stringify(msg));
+            if (!params['missing-meal-ok']) {
+              warnings.push(msg);
+            }
+            // process.exit(1);
         }
     }
     //if (meal_input) { meal_data = require(cwd + '/' + meal_input); }
@@ -107,6 +130,10 @@ if (!module.parent) {
             console.error(msg.msg);
             console.error(e);
             // console.log(JSON.stringify(msg));
+            if (!params['missing-auto-sens-ok']) {
+              errors.push(msg);
+            }
+            // process.exit(1);
         }
       }
     }
@@ -128,6 +155,10 @@ if (!module.parent) {
         errors.push(msg);
         /// return 1;
     }
+    if (warnings.length) {
+      console.error(JSON.stringify(warnings));
+    }
+
     if (errors.length) {
       console.log(JSON.stringify(errors));
       process.exit(1);
@@ -143,9 +174,9 @@ if (!module.parent) {
     console.error(JSON.stringify(currenttemp));
     console.error(JSON.stringify(profile));
 
-    var setTempBasal = require('oref0/lib/basal-set-temp');
+    var tempBasalFunctions = require('oref0/lib/basal-set-temp');
 
-    rT = determinebasal.determine_basal(glucose_status, currenttemp, iob_data, profile, autosens_data, meal_data, setTempBasal);
+    rT = determinebasal.determine_basal(glucose_status, currenttemp, iob_data, profile, autosens_data, meal_data, tempBasalFunctions);
 
     if(typeof rT.error === 'undefined') {
         console.log(JSON.stringify(rT));
